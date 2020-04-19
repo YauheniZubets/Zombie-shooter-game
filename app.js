@@ -447,7 +447,6 @@ function mainGame() {
             r: ZOMBIES_SIZE / 2,
             a: (Math.floor(Math.random() * 360)) * Math.PI/180, //в радианы,
             toAttack: false
-
         };
         return zombie;
     }
@@ -683,8 +682,8 @@ function mainGame() {
                 mainDiv.classList.remove('close');
                 clearInterval(gameInterv);
                 gameInterv=null;
-                
-                musicGame=null;
+                musicGame.pause();
+                //musicGame=null;
                 
         } 
     }
