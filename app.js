@@ -683,8 +683,7 @@ function mainGame() {
                 clearInterval(gameInterv);
                 gameInterv=null;
                 musicGame.pause();
-                //musicGame=null;
-                
+                //musicGame=null;  
         } 
     }
     
