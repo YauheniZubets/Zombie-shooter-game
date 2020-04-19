@@ -1,11 +1,3 @@
-// 1)сделана синхронизация с firebase(realtime database) - открыть поле регистрация в меню и зарегистрировать ник, далее в рекордах
-// сохраняются ники. Можно играть и без регистрации, тогда рекорд сохраняется только для localstorage;
-// 2)стрельба главного героя теперь именно из пистолета при отрисовке (прошлый раз было смещение стартовой точки вылета пули);
-// 3)исправлена отрисовка при ходьбе героя (раньше картинка иногда пропадала когда герой двигался по полю);
-// 4)добавлена кнопка выхода в меню;
-// 5)добавлена кнопка паузы игры;
-// 6)при нажатии отдновременно: ArrowUp and ArrowDown главный игрок не пропадает;
-
 let mainDiv, inp1, inp2, sbmt, user, regField, tableDiv, table;
 let players=[],
     scores=[];
@@ -250,7 +242,7 @@ createMainCharacters();
 
 //для загрузки зомби из папки
 function getZombImage(directory, folder, lvl, male, stay, stayPos, index) {
-    let img=new Image(100, 100);
+    let img=new Image();
     img.src=directory+'/'+folder+'/'+lvl+'/'+male+'/'+stay+'/'+stayPos+'_0'+index+'.png';
     return img;
 }
@@ -273,15 +265,15 @@ function createZombies() {
                         8:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'Attack', 'Attack', '08')
                     },
                     walk:{
-                        0:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'Walk', 'Walk', '00'),
-                        1:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'Walk', 'Walk', '01'),
-                        2:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'Walk', 'Walk', '02'),
-                        3:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'Walk', 'Walk', '03'),
-                        4:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'Walk', 'Walk', '04'),
-                        5:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'Walk', 'Walk', '05'),
-                        6:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'Walk', 'Walk', '06'),
-                        7:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'Walk', 'Walk', '07'),
-                        8:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'Walk', 'Walk', '08')
+                        0:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'walk', 'walk', '00'),
+                        1:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'walk', 'walk', '01'),
+                        2:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'walk', 'walk', '02'),
+                        3:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'walk', 'walk', '03'),
+                        4:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'walk', 'walk', '04'),
+                        5:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'walk', 'walk', '05'),
+                        6:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'walk', 'walk', '06'),
+                        7:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'walk', 'walk', '07'),
+                        8:getZombImage('images', 'Zombies', '1lvl', 'Zombie3_male', 'walk', 'walk', '08')
                     }
                 }
             }
@@ -296,10 +288,10 @@ function mainGame() {
     const FPS = 30; // frames per second
     const ZOMBIES_NUM=2; //количество зомби сначала
     const ZOMBIES_SPEED=100; //скорость в пикселях
-    const ZOMBIES_SIZE=200; //размер в пикселях
+    const ZOMBIES_SIZE=100; //размер в пикселях
     const PERS_MOVE_SPEED = 5; // acceleration of the ship in pixels per second per second
     const TURN_SPEED = 360; // turn speed in degrees per second
-    const PERS_SIZE = 100; // ship height in pixels
+    const PERS_SIZE = 50; // ship height in pixels
     const PERS_DEAD_DUR=2; // время показа спрайтов dead
     const PERS_INV_DUR=3; // время неуязвимости на старте для главного героя
     const PERS_BLINK_DUR=0.1; // время мигания на старте для главного героя
@@ -352,12 +344,34 @@ function mainGame() {
 //создаем зомби
     function createZombies() {
         zombies=[];
-        var x, y;
+        var x, y, s, h, w;
+
+        //split canvas-field on square sectors
+        var arrayOfSectors = [],
+            column = canv.width/(ZOMBIES_SIZE+50) | 0,
+            row = canv.height/(ZOMBIES_SIZE+50) | 0,
+            length = column * row,
+            sectorWidth = canv.width / column,
+            sectorHeight = canv.height / row;
+            console.log(sectorWidth, sectorHeight);
+
+        //get the numbers row
+        if (!arrayOfSectors.length) {
+            arrayOfSectors = Array.from({
+                length
+            }, (v, t) => t);
+        }
+
         for (let i=0; i<ZOMBIES_NUM + level; i++){
             do {
                 //рандомные координаты по канвасу
-                x=Math.floor((Math.random() * canv.width));
-                y=Math.floor((Math.random() * canv.height));
+                // x=Math.floor((Math.random() * canv.width));
+                // y=Math.floor((Math.random() * canv.height));
+                s = arrayOfSectors.splice((Math.random() * arrayOfSectors.length | 0), 1)[0];
+                h = s / row | 0;
+                w = s % column;
+                x=sectorWidth*w;
+                y=sectorHeight*h;
             } while (distBetween(pers.x, pers.y, x, y) < ZOMBIES_SIZE);//делаем так чтобы зомби на страте не достигали героя
             zombies.push(newZombie(x, y));
         }
@@ -519,7 +533,8 @@ function mainGame() {
 //рисуем зомби
     let indexZomb=0,
         tickCountZomb=0;
-    function drawZomb(position, hor, vert, a, i){
+
+    function drawZomb(position, hor, vert, a){
         let zombLength=Object.keys(mainZombies.level_1.male.zombie_1[position]).length;//текущий спрайт
         if (indexZomb<zombLength){
             if (tickCountZomb>5){
@@ -588,19 +603,19 @@ function mainGame() {
     //рисуем персонаж
     function drawWalkPers(position, weapon, x, y, a) {
 
-        let indexLength=Object.keys(mainCharacters.male[position][weapon]).length;
-        if (indexWalk<indexLength){
+        let indexLengthWalk=Object.keys(mainCharacters.male[position][weapon]).length;
+        if (indexWalk<indexLengthWalk){
             if (tickCountWalk>5){
                 indexWalk++;
                 tickCountWalk=0;
             }
-            if (indexWalk>indexLength-1)indexWalk=0;
-            let currentPers=mainCharacters.male[position][weapon][indexWalk];//текущий спрайт
+            if (indexWalk>indexLengthWalk-1)indexWalk=0;
+            let currentPersW=mainCharacters.male[position][weapon][indexWalk];//текущий спрайт
 
             ctx.save();
             ctx.translate(x, y);
             ctx.rotate(a);
-            ctx.drawImage(currentPers, -PERS_SIZE/2, -PERS_SIZE/2, PERS_SIZE, PERS_SIZE);
+            ctx.drawImage(currentPersW, -PERS_SIZE/2, -PERS_SIZE/2, PERS_SIZE, PERS_SIZE);
             ctx.restore();
             tickCountWalk++;
         }
@@ -628,6 +643,16 @@ function mainGame() {
     let shooting=true;
     let back=new Image();
     back.src='images/menu/background_menu.png';
+
+    document.body.classList.remove('loaded');//loader for a game-scene
+    back.onload = function () {
+        document.body.classList.add('loaded_hiding');
+        window.setTimeout(function () {
+          document.body.classList.add('loaded');
+          document.body.classList.remove('loaded_hiding');
+        }, 500);
+      }
+
     let basicMenuTitle=false;
     let basicPauseTitle=false;
     let pauseStatus=false;
@@ -703,11 +728,11 @@ function mainGame() {
         if (!deading){
             if (blinkOn && !pers.dead) {
                 if (pers.moveUp || pers.moveDown) {
-                    
+                    //drawPers('stayPos', 'gun', pers.x, pers.y, pers.a);
                     drawWalkPers('walkPos', 'gun', pers.x, pers.y, pers.a);
                 }
                 if (!pers.moveUp && !pers.moveDown) {
-                    
+                    //drawWalkPers('walkPos', 'gun', pers.x, pers.y, pers.a);
                     drawPers('stayPos', 'gun', pers.x, pers.y, pers.a);
                 }
             }
@@ -727,9 +752,10 @@ function mainGame() {
         //отображаем зомби в канвасе и двигаем и проверяем на границы
 
         for (let i=0; i<zombies.length; i++){
-            if (!zombies[i].toAttack){//зомби
-                drawZomb('walk', zombies[i].x, zombies[i].y, zombies[i].a, i);
-            }
+            drawZomb('walk', zombies[i].x, zombies[i].y, zombies[i].a);
+            // if (!zombies[i].toAttack){//зомби
+            //     drawZomb('walk', zombies[i].x, zombies[i].y, zombies[i].a, i);
+            // }
         }
 
         //проверка на столкновния зомби
@@ -739,7 +765,7 @@ function mainGame() {
                     if (distBetween(pers.x, pers.y, zombies[i].x, zombies[i].y) < pers.r + zombies[i].r) {
                         //вызвать спрайты атаки зомби уменьшить хелсы
                         zombies[i].toAttack = true;
-                        drawZomb('attack', zombies[i].x, zombies[i].y, zombies[i].a, i);
+                        //drawZomb('attack', zombies[i].x, zombies[i].y, zombies[i].a, i);
                         deadPers();//уменьшение хелсов и dead
                         break;
                     } else {
@@ -865,7 +891,6 @@ function mainGame() {
             //перемещаем пулю
             pers.bullets[i].x += pers.bullets[i].xv;
             pers.bullets[i].y -= pers.bullets[i].yv;
-            //console.log( pers.bullets[i].x, pers.bullets[i].y);
 
             //вычисляем длину полета пули
             pers.bullets[i].dist += Math.sqrt(Math.pow(pers.bullets[i].xv,2) + Math.pow(pers.bullets[i].yv,2));
@@ -928,7 +953,7 @@ function mainGame() {
 
         for (let i=0; i<zombies.length; i++){
             zombies[i].x+=zombies[i].xSpeed*Math.sin(zombies[i].a);
-            zombies[i].y-=zombies[i].ySpeed*Math.cos(zombies[i].a);
+            zombies[i].y+=zombies[i].ySpeed*Math.sin(zombies[i].a);
 
             if (zombies[i].x-zombies[i].r<0){
                 zombies[i].a+=(Math.floor(Math.random() * 360)) * Math.PI/180;
